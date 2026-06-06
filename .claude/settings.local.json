@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/shivamsharma/Desktop/project/myworkflow/**)",
+      "Bash(rmdir /Users/shivamsharma/Desktop/project/myworkflow/my-platform/templates)",
+      "Bash(mv /Users/shivamsharma/Desktop/project/myworkflow/templates/landing-modern /Users/shivamsharma/Desktop/project/myworkflow/my-platform/templates/landing-modern)",
+      "Bash(rmdir /Users/shivamsharma/Desktop/project/myworkflow/templates)",
+      "Bash(mkdir -p /Users/shivamsharma/Desktop/project/myworkflow/my-platform/templates)",
+      "Bash(mv /Users/shivamsharma/Desktop/project/myworkflow/templates/landing-modern /Users/shivamsharma/Desktop/project/myworkflow/my-platform/templates/)"
+    ]
+  }
+}
