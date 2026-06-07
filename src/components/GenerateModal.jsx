@@ -24,7 +24,7 @@ import {
   X,
 } from "lucide-react";
 
-const API_BASE = "http://localhost:5174";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5174";
 
 const INPUT_MODES = [
   { id: "ai", label: "✨ AI Generate", icon: Sparkles, accent: "violet" },

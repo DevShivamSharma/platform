@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+cat > .gitignore <<'EOF'
+platform/
+node_modules
+**/node_modules
+.env
+**/.env
+.DS_Store
+portals/
+EOF
