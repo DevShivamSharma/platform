@@ -2,9 +2,11 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
+  Code2,
   Database,
   LayoutDashboard,
   LayoutTemplate,
+  Mail,
   Sparkles,
   Zap,
 } from "lucide-react";
@@ -273,15 +275,119 @@ function Gallery() {
         </div>
       </section>
 
-      <footer className="relative z-10 border-t border-white/5">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:px-10">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-sky-400 to-indigo-500">
-              <Sparkles className="h-3 w-3 text-white" />
+      <footer className="relative z-10 mt-16 border-t border-white/10 bg-slate-950/60 backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-7xl px-6 py-14 sm:px-10">
+          <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+            {/* Brand */}
+            <div className="max-w-sm">
+              <Link to="/" className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-indigo-500 shadow-lg shadow-sky-500/30">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-sm font-semibold tracking-tight text-white">
+                  My Platform
+                </span>
+              </Link>
+              <p className="mt-4 text-sm leading-relaxed text-slate-400">
+                Build apps from config. Generate landing pages or assemble
+                data-backed admin portals from reusable building blocks.
+              </p>
+              <div className="mt-5 flex items-center gap-3">
+                <a
+                  href="https://github.com"
+                  aria-label="GitHub"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
+                >
+                  <Code2 className="h-4 w-4" />
+                </a>
+                <a
+                  href="mailto:hello@myplatform.dev"
+                  aria-label="Email"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
+                >
+                  <Mail className="h-4 w-4" />
+                </a>
+              </div>
             </div>
-            <span>My Platform — build apps from config.</span>
+
+            {/* Link columns */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Product
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm text-slate-400">
+                <li>
+                  <a className="transition hover:text-white" href="#templates">
+                    Templates
+                  </a>
+                </li>
+                <li>
+                  <Link className="transition hover:text-white" to="/portal/demo-admin">
+                    Demo portal
+                  </Link>
+                </li>
+                <li>
+                  <a className="transition hover:text-white" href="#templates">
+                    Get started
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Resources
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm text-slate-400">
+                <li>
+                  <a className="transition hover:text-white" href="https://github.com">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a className="transition hover:text-white" href="https://github.com">
+                    GitHub
+                  </a>
+                </li>
+                <li>
+                  <a className="transition hover:text-white" href="#templates">
+                    Changelog
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Company
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm text-slate-400">
+                <li>
+                  <a className="transition hover:text-white" href="#">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a className="transition hover:text-white" href="#">
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a className="transition hover:text-white" href="#">
+                    Terms
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
-          <span>© {new Date().getFullYear()} My Platform</span>
+
+          <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-sm text-slate-500 sm:flex-row">
+            <span>© {new Date().getFullYear()} My Platform. All rights reserved.</span>
+            <span className="inline-flex items-center gap-2">
+              <Zap className="h-3.5 w-3.5 text-sky-300" />
+              Built config-first
+            </span>
+          </div>
         </div>
       </footer>
 

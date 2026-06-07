@@ -1,0 +1,423 @@
+{
+  "version": 1,
+  "templateId": "portal-admin",
+  "slug": "ss-suite-new2",
+  "portalName": "ss-suite-new2",
+  "appName": "SS Suite New2",
+  "industry": "crm",
+  "themePreset": "indigo",
+  "themeColor": "#4f46e5",
+  "logoUrl": "",
+  "logoText": "SS",
+  "loginPage": {
+    "portalName": "SS Suite New2",
+    "badge": "Customer Relationship Management",
+    "headline": "Manage leads, customers, and sales operations from one platform",
+    "highlightText": "customers",
+    "description": "A complete CRM solution for managing customer relationships, sales opportunities, and business growth.",
+    "features": [
+      {
+        "title": "Lead Management",
+        "description": "Capture, organize, and convert prospects efficiently."
+      },
+      {
+        "title": "Sales Pipeline",
+        "description": "Track opportunities from first contact to successful closure."
+      },
+      {
+        "title": "Customer Insights",
+        "description": "Maintain complete customer records and communication history."
+      }
+    ],
+    "footerText": "Powered by SS Suite Technologies"
+  },
+  "footer": {
+    "text": "Powered by SS Suite Technologies"
+  },
+  "company": {
+    "name": "SS Suite Technologies",
+    "website": "https://sssuite.com",
+    "supportEmail": "support@sssuite.com"
+  },
+  "dashboard": {
+    "enabled": true,
+    "template": "stats-overview",
+    "style": "crm"
+  },
+  "profile": {
+    "enabled": true
+  },
+  "modules": [
+    {
+      "id": "leads",
+      "singularName": "Lead",
+      "pluralName": "Leads",
+      "icon": "UserPlus",
+      "fields": [
+        {
+          "label": "Lead Name",
+          "key": "lead_name",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Email",
+          "key": "email",
+          "type": "email",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Phone Number",
+          "key": "phone",
+          "type": "phone",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Company Name",
+          "key": "company_name",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Lead Source",
+          "key": "lead_source",
+          "type": "select",
+          "required": true,
+          "width": "half",
+          "options": [
+            "Website",
+            "Referral",
+            "LinkedIn",
+            "Advertisement",
+            "Cold Outreach"
+          ],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Status",
+          "key": "status",
+          "type": "select",
+          "required": true,
+          "width": "half",
+          "options": [
+            "New",
+            "Contacted",
+            "Qualified",
+            "Proposal Sent",
+            "Won",
+            "Lost"
+          ],
+          "features": {
+            "filter": true
+          }
+        }
+      ],
+      "listColumns": [
+        "lead_name",
+        "company_name",
+        "email",
+        "status"
+      ],
+      "tableFeatures": {
+        "sort": true,
+        "filter": true,
+        "search": true,
+        "pagination": true,
+        "export": true
+      }
+    },
+    {
+      "id": "customers",
+      "singularName": "Customer",
+      "pluralName": "Customers",
+      "icon": "Users",
+      "fields": [
+        {
+          "label": "Customer Name",
+          "key": "customer_name",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Email",
+          "key": "email",
+          "type": "email",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Phone Number",
+          "key": "phone",
+          "type": "phone",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Customer Tier",
+          "key": "tier",
+          "type": "select",
+          "required": true,
+          "width": "half",
+          "options": [
+            "Bronze",
+            "Silver",
+            "Gold",
+            "Enterprise"
+          ],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Active Customer",
+          "key": "active",
+          "type": "toggle",
+          "required": false,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Tags",
+          "key": "tags",
+          "type": "tags",
+          "required": false,
+          "width": "full",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        }
+      ],
+      "listColumns": [
+        "customer_name",
+        "email",
+        "phone",
+        "tier",
+        "active"
+      ],
+      "tableFeatures": {
+        "sort": true,
+        "filter": true,
+        "search": true,
+        "pagination": true,
+        "export": true
+      }
+    },
+    {
+      "id": "opportunities",
+      "singularName": "Opportunity",
+      "pluralName": "Opportunities",
+      "icon": "Target",
+      "fields": [
+        {
+          "label": "Opportunity Name",
+          "key": "opportunity_name",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Customer",
+          "key": "customer",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Stage",
+          "key": "stage",
+          "type": "select",
+          "required": true,
+          "width": "half",
+          "options": [
+            "Discovery",
+            "Qualification",
+            "Proposal",
+            "Negotiation",
+            "Closed Won",
+            "Closed Lost"
+          ],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Deal Value",
+          "key": "deal_value",
+          "type": "currency",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Expected Close Date",
+          "key": "expected_close_date",
+          "type": "date",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        }
+      ],
+      "listColumns": [
+        "opportunity_name",
+        "customer",
+        "stage",
+        "deal_value",
+        "expected_close_date"
+      ],
+      "tableFeatures": {
+        "sort": true,
+        "filter": true,
+        "search": true,
+        "pagination": true,
+        "export": true
+      }
+    },
+    {
+      "id": "activities",
+      "singularName": "Activity",
+      "pluralName": "Activities",
+      "icon": "Calendar",
+      "fields": [
+        {
+          "label": "Activity Title",
+          "key": "activity_title",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Activity Type",
+          "key": "activity_type",
+          "type": "radio",
+          "required": true,
+          "width": "half",
+          "options": [
+            "Call",
+            "Meeting",
+            "Email",
+            "Demo",
+            "Follow Up"
+          ],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Assigned To",
+          "key": "assigned_to",
+          "type": "text",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Due Date",
+          "key": "due_date",
+          "type": "date",
+          "required": true,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Completed",
+          "key": "completed",
+          "type": "checkbox",
+          "required": false,
+          "width": "half",
+          "options": [],
+          "features": {
+            "filter": true
+          }
+        },
+        {
+          "label": "Description",
+          "key": "description",
+          "type": "textarea",
+          "required": false,
+          "width": "full",
+          "options": [],
+          "features": {
+            "filter": false
+          }
+        }
+      ],
+      "listColumns": [
+        "activity_title",
+        "activity_type",
+        "assigned_to",
+        "due_date",
+        "completed"
+      ],
+      "tableFeatures": {
+        "sort": true,
+        "filter": true,
+        "search": true,
+        "pagination": true,
+        "export": true
+      }
+    }
+  ]
+}

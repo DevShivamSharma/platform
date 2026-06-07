@@ -481,11 +481,11 @@ export default function StepModules({ config, onChange, errors }) {
                       key={field.id || field.key || fieldIndex}
                       className="rounded-lg border border-white/10 bg-slate-900/80 p-3"
                     >
-                      <div className="grid gap-3 xl:grid-cols-[28px_1fr_1fr_150px_100px_90px_140px]">
-                        <div className="flex items-center text-slate-500">
+                      <div className="flex flex-wrap items-end gap-3">
+                        <div className="flex items-center self-center text-slate-500">
                           <GripVertical className="h-4 w-4" />
                         </div>
-                        <label className="text-xs font-medium text-slate-300">
+                        <label className="min-w-[160px] flex-1 text-xs font-medium text-slate-300">
                           Field label
                           <input
                             value={field.label}
@@ -499,7 +499,7 @@ export default function StepModules({ config, onChange, errors }) {
                             className="mt-1 w-full rounded-md border border-white/10 bg-slate-950 px-2 py-2 text-sm text-white outline-none focus:border-[var(--portal-accent)]"
                           />
                         </label>
-                        <label className="text-xs font-medium text-slate-300">
+                        <label className="min-w-[160px] flex-1 text-xs font-medium text-slate-300">
                           Field key
                           <input
                             value={field.key}
@@ -514,7 +514,7 @@ export default function StepModules({ config, onChange, errors }) {
                             className="mt-1 w-full rounded-md border border-white/10 bg-slate-950 px-2 py-2 text-sm text-white outline-none focus:border-[var(--portal-accent)]"
                           />
                         </label>
-                        <label className="text-xs font-medium text-slate-300">
+                        <label className="min-w-[140px] flex-1 text-xs font-medium text-slate-300">
                           Type
                           <select
                             value={field.type}
@@ -545,7 +545,7 @@ export default function StepModules({ config, onChange, errors }) {
                           />
                           Required
                         </label>
-                        <label className="text-xs font-medium text-slate-300">
+                        <label className="min-w-[96px] text-xs font-medium text-slate-300">
                           Width
                           <select
                             value={field.width || "full"}
@@ -563,7 +563,7 @@ export default function StepModules({ config, onChange, errors }) {
                             ))}
                           </select>
                         </label>
-                        <div className="flex items-end gap-1">
+                        <div className="ml-auto flex items-end gap-1">
                           <button
                             type="button"
                             onClick={() =>
@@ -571,7 +571,7 @@ export default function StepModules({ config, onChange, errors }) {
                                 optionsOpen: !field.optionsOpen,
                               })
                             }
-                            className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-white/10 px-2 py-2 text-xs font-semibold text-slate-200 hover:border-[var(--portal-accent)]/40"
+                            className="inline-flex items-center justify-center gap-1 rounded-md border border-white/10 px-2.5 py-2 text-xs font-semibold text-slate-200 hover:border-[var(--portal-accent)]/40"
                           >
                             <Settings className="h-3.5 w-3.5" />
                             Options
