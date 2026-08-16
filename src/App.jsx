@@ -8,6 +8,7 @@ import {
   Database,
   LayoutDashboard,
   LayoutTemplate,
+  LogOut,
   Mail,
   Zap,
 } from "lucide-react";
@@ -23,6 +24,9 @@ import GenerateModal from "./components/GenerateModal";
 import PortalWizard from "./portal/PortalWizard";
 import PortalApp from "./portal-runtime/PortalApp";
 import { templateCategories } from "./templates";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import LoginPage from "./auth/LoginPage";
 
 const gridVariants = {
   hidden: { opacity: 0 },
@@ -160,6 +164,7 @@ function TemplateCard({ template, onUse }) {
 function Gallery() {
   const [activeTemplate, setActiveTemplate] = useState(null);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   function handleUseTemplate(template) {
     if (template.inputMode === "wizard") {
@@ -222,6 +227,15 @@ function Gallery() {
               Get started
               <ArrowRight className="h-3.5 w-3.5" />
             </a>
+            <button
+              type="button"
+              onClick={logout}
+              className="ml-1 inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-slate-400 transition-all duration-200 hover:border-red-400/30 hover:bg-red-500/[0.08] hover:text-red-300 active:scale-[0.98]"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -471,12 +485,15 @@ function Gallery() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Gallery />} />
-        <Route path="/portal/new/:templateId" element={<PortalWizard />} />
-        <Route path="/portal/:slug/*" element={<PortalApp />} />
-        <Route path="/p/:slug/*" element={<PortalApp />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
+          <Route path="/portal/new/:templateId" element={<ProtectedRoute><PortalWizard /></ProtectedRoute>} />
+          <Route path="/portal/:slug/*" element={<ProtectedRoute><PortalApp /></ProtectedRoute>} />
+          <Route path="/p/:slug/*" element={<ProtectedRoute><PortalApp /></ProtectedRoute>} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
