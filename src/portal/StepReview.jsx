@@ -5,8 +5,11 @@ import {
   Clipboard,
   Code2,
   Copy,
-  Loader2,
+  Database,
+  LayoutDashboard,
+  Palette,
   Upload,
+  Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -80,6 +83,21 @@ const schemaReference = `{
 
 const aiPrompt = `Create a customer-specific portal-config.json for a Supabase-backed admin portal. Use this schema exactly. Choose one industry from healthcare, crm, hrms, school, inventory, erp, generic. Every visible title, subtitle, feature, footer, module, icon, and field must match the selected industry and customer. Do not include healthcare terms unless industry is healthcare. Include modules with fields using these field types only: text, email, number, select, date, textarea, toggle, phone, currency, multi-select, radio, file, image, tags, checkbox. Return valid JSON only.`;
 
+const toolButtonClass =
+  "inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:border-[rgba(var(--portal-accent-rgb),0.45)] hover:bg-white/5";
+
+function SummaryCard({ icon: Icon, title, children }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 ring-1 ring-white/5">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <Icon className="h-4 w-4" />
+        {title}
+      </div>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
 export default function StepReview({
   config,
   onConfigReplace,
@@ -94,6 +112,18 @@ export default function StepReview({
   const [jsonError, setJsonError] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const [showSchema, setShowSchema] = useState(false);
+
+  const modules = config.modules || [];
+  const fieldCount = modules.reduce(
+    (total, module) => total + (module.fields?.length || 0),
+    0
+  );
+  const loginFeatures = (config.loginPage?.features || []).filter((feature) =>
+    feature.title?.trim()
+  );
+  const authScreens = Object.entries(config.auth?.screens || {})
+    .filter(([, enabled]) => enabled)
+    .map(([screen]) => screen);
 
   useEffect(() => {
     setJsonDraft(prettyJson);
@@ -123,71 +153,33 @@ export default function StepReview({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-xl border border-white/10 bg-slate-950 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Branding
-          </p>
-          <div className="mt-4 flex items-center gap-3">
-            <span
-              className="h-10 w-10 rounded-lg border border-white/10"
-              style={{ backgroundColor: config.themeColor }}
-            />
-            <div>
-              <h3 className="font-semibold text-white">{config.appName}</h3>
-              <p className="text-xs text-slate-400">/{config.slug}</p>
-              <p className="mt-1 text-xs capitalize text-slate-500">
-                {config.industry || "generic"}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-white/10 bg-slate-950 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Auth
-          </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
-            <p>{config.auth?.method === "magic-link" ? "Magic Link" : "Email + Password"}</p>
-            <p>
-              {Object.entries(config.auth?.screens || {})
-                .filter(([, enabled]) => enabled)
-                .map(([screen]) => screen)
-                .join(", ") || "No screens selected"}
-            </p>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-white/10 bg-slate-950 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Runtime
-          </p>
-          <div className="mt-4 space-y-2 text-sm text-slate-300">
-            <p>{config.modules?.length || 0} CRUD modules</p>
-            <p>
-              Dashboard {config.dashboard?.enabled ? "enabled" : "disabled"} ·
-              Profile {config.profile?.enabled ? "enabled" : "disabled"}
-            </p>
-          </div>
-        </section>
-      </div>
-
+      {/* Readiness banner */}
       <section
-        className={`rounded-xl border p-4 ${
+        className={`rounded-2xl border p-4 ring-1 ring-white/5 ${
           readiness.errors.length
             ? "border-rose-400/30 bg-rose-500/10"
             : "border-emerald-400/20 bg-emerald-500/10"
         }`}
       >
         <div className="flex items-start gap-3">
-          {readiness.errors.length ? (
-            <AlertTriangle className="mt-0.5 h-5 w-5 text-rose-300" />
-          ) : (
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
-          )}
+          <span
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+              readiness.errors.length
+                ? "bg-rose-500/15 text-rose-300"
+                : "bg-emerald-500/15 text-emerald-300"
+            }`}
+          >
+            {readiness.errors.length ? (
+              <AlertTriangle className="h-5 w-5" />
+            ) : (
+              <CheckCircle2 className="h-5 w-5" />
+            )}
+          </span>
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-white">
-              Production Readiness
+              {readiness.errors.length
+                ? "Fix these before generating"
+                : "Ready to generate"}
             </h3>
             {readiness.errors.length ? (
               <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-rose-100">
@@ -196,8 +188,8 @@ export default function StepReview({
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-emerald-100">
-                No blocking branding, login-page, module, or industry leakage issues found in this config.
+              <p className="mt-1 text-sm text-emerald-100/90">
+                No blocking branding, login page, module, or industry leakage issues found.
               </p>
             )}
             {readiness.warnings.length > 0 && (
@@ -211,20 +203,109 @@ export default function StepReview({
         </div>
       </section>
 
-      <section className="rounded-xl border border-white/10 bg-slate-950 p-4">
-        <h3 className="text-sm font-semibold text-white">Modules summary</h3>
-        <div className="mt-4 grid gap-3">
-          {(config.modules || []).map((module) => (
+      {/* Summary cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard icon={Palette} title="Branding">
+          <div className="flex items-center gap-3">
+            {config.logoUrl ? (
+              <img
+                src={config.logoUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+              />
+            ) : (
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold uppercase text-white ring-1 ring-white/10"
+                style={{ backgroundColor: config.themeColor }}
+              >
+                {(config.logoText || "AP").slice(0, 3)}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{config.appName}</p>
+              <p className="truncate text-xs text-slate-400">/{config.slug}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-md bg-white/5 px-2 py-1 text-xs capitalize text-slate-300">
+              {config.industry || "generic"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-white/5 px-2 py-1 font-mono text-xs text-slate-300">
+              <span
+                className="h-2.5 w-2.5 rounded-full ring-1 ring-white/20"
+                style={{ backgroundColor: config.themeColor }}
+              />
+              {config.themeColor}
+            </span>
+          </div>
+        </SummaryCard>
+
+        <SummaryCard icon={Wand2} title="Login page">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--portal-accent)]">
+            {config.loginPage?.badge || "Portal"}
+          </p>
+          <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-white">
+            {config.loginPage?.headline || "No headline set"}
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            {loginFeatures.length} feature highlight{loginFeatures.length === 1 ? "" : "s"}
+          </p>
+        </SummaryCard>
+
+        <SummaryCard icon={Database} title="Modules">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-white">{modules.length}</span>
+            <span className="text-sm text-slate-400">
+              module{modules.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            {fieldCount} field{fieldCount === 1 ? "" : "s"} in total
+          </p>
+        </SummaryCard>
+
+        <SummaryCard icon={LayoutDashboard} title="Pages">
+          <ul className="space-y-1.5 text-sm text-slate-300">
+            <li className="flex items-center justify-between gap-2">
+              <span>Dashboard</span>
+              <span className={`text-xs font-semibold ${config.dashboard?.enabled ? "text-emerald-300" : "text-slate-500"}`}>
+                {config.dashboard?.enabled ? config.dashboard.template || "on" : "off"}
+              </span>
+            </li>
+            <li className="flex items-center justify-between gap-2">
+              <span>Profile</span>
+              <span className={`text-xs font-semibold ${config.profile?.enabled ? "text-emerald-300" : "text-slate-500"}`}>
+                {config.profile?.enabled ? "on" : "off"}
+              </span>
+            </li>
+            <li className="flex items-center justify-between gap-2">
+              <span>Auth</span>
+              <span className="truncate text-xs font-semibold capitalize text-slate-300">
+                {authScreens.length ? authScreens.join(", ") : "none"}
+              </span>
+            </li>
+          </ul>
+        </SummaryCard>
+      </div>
+
+      {/* Modules summary */}
+      <section className="rounded-2xl border border-white/10 bg-slate-900/40 ring-1 ring-white/5">
+        <header className="flex items-center gap-2 border-b border-white/5 px-5 py-4">
+          <Database className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-white">Modules summary</h3>
+        </header>
+        <div className="grid gap-3 p-5 lg:grid-cols-2">
+          {modules.map((module) => (
             <div
               key={module.id}
-              className="rounded-lg border border-white/10 bg-slate-900 p-3"
+              className="rounded-xl border border-white/10 bg-slate-950/60 p-3"
             >
-              <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                <div>
-                  <p className="font-semibold text-white">{module.pluralName}</p>
-                  <p className="text-xs text-slate-500">/{module.id}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{module.pluralName}</p>
+                  <p className="truncate text-xs text-slate-500">/{module.id}</p>
                 </div>
-                <span className="w-fit rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300">
+                <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-slate-300 ring-1 ring-white/10">
                   {module.fields?.length || 0} fields
                 </span>
               </div>
@@ -234,127 +315,139 @@ export default function StepReview({
                     key={field.key}
                     className="rounded-md bg-white/5 px-2 py-1 text-xs text-slate-300"
                   >
-                    {field.label} · {field.type}
+                    {field.label}
+                    <span className="text-slate-500"> · {field.type}</span>
                   </span>
                 ))}
               </div>
             </div>
           ))}
+          {modules.length === 0 && (
+            <p className="text-sm text-slate-500">No modules configured.</p>
+          )}
         </div>
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setJsonDraft(prettyJson);
-              setShowJson((value) => !value);
-            }}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-[var(--portal-accent)]/45"
-          >
-            <Code2 className="h-4 w-4" />
-            View JSON
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setJsonDraft("");
-              setShowJson(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-[var(--portal-accent)]/45"
-          >
-            <Upload className="h-4 w-4" />
-            Paste JSON
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSchema(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-[var(--portal-accent)]/45"
-          >
-            <BookOpen className="h-4 w-4" />
-            Schema Reference
-          </button>
-          <button
-            type="button"
-            onClick={copyConfig}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:border-[var(--portal-accent)]/45"
-          >
-            <Copy className="h-4 w-4" />
-            {copyStatus || "Copy Config"}
-          </button>
-        </div>
+      {/* Config tools */}
+      <section className="rounded-2xl border border-white/10 bg-slate-900/40 ring-1 ring-white/5">
+        <header className="flex flex-col gap-3 border-b border-white/5 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Code2 className="h-4 w-4 text-slate-400" />
+            <h3 className="text-sm font-semibold text-white">Config JSON</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setJsonDraft(prettyJson);
+                setShowJson((value) => !value);
+              }}
+              className={toolButtonClass}
+            >
+              <Code2 className="h-4 w-4" />
+              {showJson ? "Hide JSON" : "View JSON"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setJsonDraft("");
+                setShowJson(true);
+              }}
+              className={toolButtonClass}
+            >
+              <Upload className="h-4 w-4" />
+              Paste JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSchema((value) => !value)}
+              className={toolButtonClass}
+            >
+              <BookOpen className="h-4 w-4" />
+              Schema reference
+            </button>
+            <button type="button" onClick={copyConfig} className={toolButtonClass}>
+              <Copy className="h-4 w-4" />
+              {copyStatus || "Copy config"}
+            </button>
+          </div>
+        </header>
 
-        {/* Generate Portal button is in the wizard footer — no duplicate here */}
-      </div>
+        {!showJson && !showSchema && (
+          <p className="px-5 py-4 text-xs text-slate-500">
+            View or paste the raw portal config, or copy an AI-ready schema prompt.
+          </p>
+        )}
+
+        {showJson && (
+          <div className="space-y-3 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                <Clipboard className="h-4 w-4" />
+                Portal config JSON
+              </h4>
+              <button
+                type="button"
+                onClick={applyJsonDraft}
+                className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+                style={{ backgroundColor: "var(--portal-accent)" }}
+              >
+                Apply JSON
+              </button>
+            </div>
+            <textarea
+              value={jsonDraft}
+              onChange={(event) => setJsonDraft(event.target.value)}
+              spellCheck="false"
+              className="h-[360px] w-full resize-y rounded-lg border border-white/10 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100 outline-none transition focus:border-[var(--portal-accent)] focus:ring-2 focus:ring-[var(--portal-accent)]/20"
+              placeholder="Paste portal-config.json here"
+            />
+            {jsonError && (
+              <p className="text-xs text-rose-300">{jsonError}</p>
+            )}
+          </div>
+        )}
+
+        {showSchema && (
+          <div className="space-y-3 border-t border-white/5 p-5">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <h4 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                <BookOpen className="h-4 w-4" />
+                Schema reference
+              </h4>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={copySchemaReference}
+                  className="cursor-pointer rounded-md border border-white/10 px-3 py-1.5 text-xs font-semibold text-[var(--portal-accent)] transition hover:border-[rgba(var(--portal-accent-rgb),0.45)]"
+                >
+                  Copy prompt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSchema(false)}
+                  className="cursor-pointer rounded-md border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-white/20"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-slate-950 p-3">
+              <p className="mb-3 text-xs leading-relaxed text-slate-300">
+                {aiPrompt}
+              </p>
+              <pre className="max-h-[360px] overflow-auto text-xs leading-relaxed text-slate-100">
+                {schemaReference}
+              </pre>
+            </div>
+          </div>
+        )}
+      </section>
 
       {generateError && (
         <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-100">
           {generateError}
         </div>
-      )}
-
-      {showJson && (
-        <section className="rounded-xl border border-white/10 bg-slate-950 p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
-              <Clipboard className="h-4 w-4" />
-              Portal config JSON
-            </h3>
-            <button
-              type="button"
-              onClick={applyJsonDraft}
-              className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-semibold text-[var(--portal-accent)] hover:border-[var(--portal-accent)]/45"
-            >
-              Apply JSON
-            </button>
-          </div>
-          <textarea
-            value={jsonDraft}
-            onChange={(event) => setJsonDraft(event.target.value)}
-            spellCheck="false"
-            className="h-[360px] w-full resize-y rounded-lg border border-white/10 bg-slate-900 p-3 font-mono text-xs leading-relaxed text-slate-100 outline-none focus:border-[var(--portal-accent)]"
-            placeholder="Paste portal-config.json here"
-          />
-          {jsonError && (
-            <p className="mt-2 text-xs text-rose-300">{jsonError}</p>
-          )}
-        </section>
-      )}
-
-      {showSchema && (
-        <section className="rounded-xl border border-[var(--portal-accent)]/20 bg-slate-950 p-4">
-          <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-white">
-              <BookOpen className="h-4 w-4" />
-              Schema Reference
-            </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={copySchemaReference}
-                className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-semibold text-[var(--portal-accent)] hover:border-[var(--portal-accent)]/45"
-              >
-                Copy prompt
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSchema(false)}
-                className="rounded-md border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-[var(--portal-accent)]/45"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-slate-900 p-3">
-            <p className="mb-3 text-xs leading-relaxed text-slate-300">
-              {aiPrompt}
-            </p>
-            <pre className="max-h-[360px] overflow-auto text-xs leading-relaxed text-slate-100">
-              {schemaReference}
-            </pre>
-          </div>
-        </section>
       )}
     </div>
   );

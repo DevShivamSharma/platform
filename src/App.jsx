@@ -10,6 +10,9 @@ import {
   LayoutTemplate,
   LogOut,
   Mail,
+  Rocket,
+  SlidersHorizontal,
+  Sparkles,
   Zap,
 } from "lucide-react";
 import {
@@ -46,13 +49,125 @@ const sectionReveal = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] } },
 };
 
+const howItWorks = [
+  {
+    icon: LayoutTemplate,
+    step: "01",
+    title: "Pick a template",
+    text: "Landing pages or data-backed admin portals, all pre-styled and responsive.",
+  },
+  {
+    icon: SlidersHorizontal,
+    step: "02",
+    title: "Describe or configure",
+    text: "Prompt the AI for a landing page, or walk through the wizard to define portal modules.",
+  },
+  {
+    icon: Rocket,
+    step: "03",
+    title: "Deploy",
+    text: "Get a live URL, a GitHub repo, and a Supabase database without touching a server.",
+  },
+];
+
+const heroConfigLines = [
+  ["appName", '"Acme Admin"', "text-sky-300"],
+  ["industry", '"crm"', "text-sky-300"],
+  ["themeColor", '"#2563eb"', "text-sky-300"],
+  ["dashboard", "{ enabled: true }", "text-indigo-300"],
+  ["modules", "[ Customers, Deals, Tasks ]", "text-indigo-300"],
+];
+
 function isHexAccent(accent) {
   return typeof accent === "string";
 }
 
+function HeroPreview() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 28 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className="relative hidden min-h-[26rem] lg:block"
+      aria-hidden="true"
+    >
+      {/* config card */}
+      <div className="absolute left-0 top-0 w-[68%] rounded-2xl border border-white/[0.08] bg-[#0b1120]/95 p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_24px_48px_-12px_rgba(0,0,0,0.65)]">
+        <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-3">
+          <span className="h-2 w-2 rounded-full bg-white/15" />
+          <span className="h-2 w-2 rounded-full bg-white/15" />
+          <span className="h-2 w-2 rounded-full bg-white/15" />
+          <span className="ml-2 font-mono text-[11px] text-slate-500">
+            portal-config.json
+          </span>
+        </div>
+        <div className="mt-3 space-y-1.5 font-mono text-[11px] leading-relaxed">
+          <p className="text-slate-500">{"{"}</p>
+          {heroConfigLines.map(([key, value, color]) => (
+            <p key={key} className="pl-4 text-slate-400">
+              <span className="text-slate-300">"{key}"</span>
+              <span className="text-slate-500">: </span>
+              <span className={color}>{value}</span>
+              <span className="text-slate-500">,</span>
+            </p>
+          ))}
+          <p className="text-slate-500">{"}"}</p>
+        </div>
+      </div>
+
+      {/* arrow connector */}
+      <div className="absolute left-[52%] top-[46%] flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/30 bg-[#070b14] text-sky-300 shadow-[0_0_24px_-6px_rgba(56,189,248,0.7)]">
+        <ArrowRight className="h-4 w-4" />
+      </div>
+
+      {/* generated portal card */}
+      <div className="absolute bottom-0 right-0 w-[72%] overflow-hidden rounded-2xl border border-white/[0.1] bg-slate-950 shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_32px_64px_-16px_rgba(0,0,0,0.8)]">
+        <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
+          <span className="h-5 w-5 rounded-md bg-sky-500" />
+          <span className="h-2 w-16 rounded-full bg-white/20" />
+          <span className="ml-auto h-2 w-10 rounded-full bg-white/10" />
+        </div>
+        <div className="grid grid-cols-[3.5rem_1fr]">
+          <div className="space-y-2 border-r border-white/[0.06] p-3">
+            <span className="block h-2 w-full rounded-full bg-sky-400/70" />
+            <span className="block h-2 w-full rounded-full bg-white/10" />
+            <span className="block h-2 w-full rounded-full bg-white/10" />
+            <span className="block h-2 w-full rounded-full bg-white/10" />
+          </div>
+          <div className="space-y-3 p-3">
+            <div className="grid grid-cols-3 gap-2">
+              {["bg-sky-400/80", "bg-indigo-400/70", "bg-emerald-400/70"].map((color) => (
+                <div
+                  key={color}
+                  className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-2"
+                >
+                  <span className="block h-1.5 w-8 rounded-full bg-white/10" />
+                  <span className={`mt-2 block h-2.5 w-12 rounded-full ${color}`} />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] p-2">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1/3 rounded-full bg-white/15" />
+                  <span className="h-1.5 w-1/4 rounded-full bg-white/10" />
+                  <span className="ml-auto h-1.5 w-8 rounded-full bg-emerald-400/50" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function TemplateCard({ template, onUse }) {
-  const { name, description, tags, type, accent, needsSupabase } = template;
+  const { name, description, tags, type, accent, needsSupabase, inputMode } =
+    template;
   const isPortal = type === "portal";
+  const InputIcon = inputMode === "wizard" ? SlidersHorizontal : Sparkles;
+  const inputLabel = inputMode === "wizard" ? "Wizard" : "AI prompt";
   const Icon = isPortal ? LayoutDashboard : LayoutTemplate;
   const accentColor = isHexAccent(accent) ? accent : undefined;
 
@@ -125,9 +240,15 @@ function TemplateCard({ template, onUse }) {
       {/* body */}
       <div className="relative flex flex-1 flex-col gap-4 p-5 pt-3">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-white">
-            {name}
-          </h3>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-base font-semibold tracking-tight text-white">
+              {name}
+            </h3>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <InputIcon className="h-3 w-3" />
+              {inputLabel}
+            </span>
+          </div>
           <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-slate-400">
             {description}
           </p>
@@ -241,55 +362,107 @@ function Gallery() {
       </header>
 
       {/* hero */}
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 pt-24 sm:px-10 sm:pt-32">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="mx-auto max-w-3xl text-center"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-500/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-sky-200 shadow-[0_0_24px_-8px_rgba(56,189,248,0.5)]">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-400" />
-            </span>
-            App Builder
-          </span>
-
-          <h1 className="mt-7 text-balance text-5xl font-bold leading-[1.03] tracking-[-0.03em] text-white sm:text-6xl md:text-7xl">
-            What do you want to{" "}
-            <span className="bg-gradient-to-r from-sky-300 via-indigo-300 to-sky-300 bg-clip-text text-transparent [text-shadow:0_0_48px_rgba(56,189,248,0.25)]">
-              build
-            </span>
-            ?
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-slate-400 sm:text-lg">
-            Generate static landing pages or assemble data-backed admin
-            portals from reusable configuration.
-          </p>
-
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-2.5">
-            {[
-              { icon: LayoutTemplate, label: `${templateCount} templates` },
-              { icon: Zap, label: "Config-driven" },
-              { icon: Database, label: "Database ready" },
-            ].map(({ icon: BadgeIcon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3.5 py-1.5 text-sm text-slate-300 backdrop-blur-sm transition-colors duration-200 hover:border-white/[0.16] hover:text-white"
-              >
-                <BadgeIcon className="h-3.5 w-3.5 text-sky-300" />
-                {label}
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-8 pt-16 sm:px-10 sm:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+            className="mx-auto max-w-2xl text-center lg:mx-0 lg:text-left"
+          >
+            <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-500/[0.08] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-sky-200 shadow-[0_0_24px_-8px_rgba(56,189,248,0.5)]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-400" />
               </span>
-            ))}
-          </div>
-        </motion.div>
+              App Builder
+            </span>
+
+            <h1 className="mt-7 text-balance text-5xl font-bold leading-[1.03] tracking-[-0.03em] text-white sm:text-6xl lg:text-[4.25rem]">
+              What do you want to{" "}
+              <span className="bg-gradient-to-r from-sky-300 via-indigo-300 to-sky-300 bg-clip-text text-transparent [text-shadow:0_0_48px_rgba(56,189,248,0.25)]">
+                build
+              </span>
+              ?
+            </h1>
+
+            <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-relaxed text-slate-400 sm:text-lg lg:mx-0">
+              Generate static landing pages or assemble data-backed admin
+              portals from reusable configuration. Pick a template, describe
+              what you need, and deploy.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <a
+                href="#templates"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-b from-sky-400 to-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_0_0_1px_rgba(56,189,248,0.45),0_8px_24px_-8px_rgba(14,165,233,0.55)] transition-all duration-200 hover:from-sky-300 hover:to-sky-400 hover:shadow-[0_0_0_1px_rgba(56,189,248,0.6),0_12px_32px_-8px_rgba(14,165,233,0.7)] active:scale-[0.98]"
+              >
+                Browse templates
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              <Link
+                to="/portal/demo-admin"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-slate-200 transition-all duration-200 hover:border-white/[0.2] hover:bg-white/[0.07] hover:text-white"
+              >
+                <LayoutDashboard className="h-4 w-4 text-sky-300" />
+                Open demo portal
+              </Link>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+              {[
+                { icon: LayoutTemplate, label: `${templateCount} templates` },
+                { icon: Zap, label: "Config-driven" },
+                { icon: Database, label: "Database ready" },
+              ].map(({ icon: BadgeIcon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-slate-300 backdrop-blur-sm transition-colors duration-200 hover:border-white/[0.16] hover:text-white"
+                >
+                  <BadgeIcon className="h-3.5 w-3.5 text-sky-300" />
+                  {label}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+
+          <HeroPreview />
+        </div>
+      </section>
+
+      {/* how it works */}
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-16 sm:px-10 sm:pt-24">
+        <motion.ol
+          variants={gridVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-60px" }}
+          className="grid gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-2 md:grid-cols-3"
+        >
+          {howItWorks.map(({ icon: StepIcon, step, title, text }) => (
+            <motion.li
+              key={step}
+              variants={cardVariants}
+              className="flex gap-4 rounded-xl p-4 transition-colors duration-200 hover:bg-white/[0.03] sm:p-5"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-sky-400/20 bg-sky-500/[0.08] text-sky-300">
+                <StepIcon className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Step {step}
+                </p>
+                <h3 className="mt-1 text-sm font-semibold text-white">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-400">{text}</p>
+              </div>
+            </motion.li>
+          ))}
+        </motion.ol>
       </section>
 
       {/* templates */}
       <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-24 sm:px-10">
-        <div id="templates" className="mt-20 space-y-24 scroll-mt-24">
+        <div id="templates" className="mt-20 space-y-20 scroll-mt-24">
           {templateCategories.map((category) => (
             <motion.section
               key={category.id}
@@ -302,12 +475,18 @@ function Gallery() {
               <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                 <div>
                   <div className="mb-3 h-px w-12 bg-gradient-to-r from-sky-400 to-transparent" />
-                  <h2
-                    id={`${category.id}-title`}
-                    className="text-2xl font-semibold tracking-tight text-white sm:text-3xl"
-                  >
-                    {category.title}
-                  </h2>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2
+                      id={`${category.id}-title`}
+                      className="text-2xl font-semibold tracking-tight text-white sm:text-3xl"
+                    >
+                      {category.title}
+                    </h2>
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                      {category.templates.length}{" "}
+                      {category.templates.length === 1 ? "template" : "templates"}
+                    </span>
+                  </div>
                   <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
                     {category.description}
                   </p>

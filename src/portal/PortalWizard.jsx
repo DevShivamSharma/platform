@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -9,8 +10,10 @@ import {
   ExternalLink,
   Loader2,
   Palette,
+  Rocket,
+  RotateCcw,
   Sparkles,
-  UserRound,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -27,9 +30,30 @@ import {
 import { provisionPortal } from "./provisionClient";
 
 const steps = [
-  { id: "branding", label: "Basics & Branding" },
-  { id: "modules", label: "Modules Builder" },
-  { id: "review", label: "Review & Generate" },
+  {
+    id: "branding",
+    label: "Basics & Branding",
+    short: "Branding",
+    description:
+      "Name the portal, pick a theme and logo, and write the login page copy.",
+    icon: Palette,
+  },
+  {
+    id: "modules",
+    label: "Modules Builder",
+    short: "Modules",
+    description:
+      "Define the entities, their fields, and how each table should behave.",
+    icon: Database,
+  },
+  {
+    id: "review",
+    label: "Review & Generate",
+    short: "Review",
+    description:
+      "Check the final config, tweak the JSON if needed, then provision the live portal.",
+    icon: Sparkles,
+  },
 ];
 
 const provisionSteps = [
@@ -43,9 +67,9 @@ const provisionSteps = [
 ];
 
 const slideVariants = {
-  enter: (direction) => ({ opacity: 0, x: direction > 0 ? 48 : -48 }),
+  enter: (direction) => ({ opacity: 0, x: direction > 0 ? 32 : -32 }),
   center: { opacity: 1, x: 0 },
-  exit: (direction) => ({ opacity: 0, x: direction > 0 ? -48 : 48 }),
+  exit: (direction) => ({ opacity: 0, x: direction > 0 ? -32 : 32 }),
 };
 
 function validateStep(stepIndex, config) {
@@ -129,8 +153,14 @@ function ProgressOverlay({
   error,
   result,
   onClose,
+  onRetry,
+  onDismiss,
 }) {
   const tables = result?.tables || [];
+  const isError = status === "error";
+  const doneCount = stepsState.filter((item) => item.status === "done").length;
+  const failedIndex = stepsState.findIndex((item) => item.status === "error");
+  const progressPercent = Math.round((doneCount / stepsState.length) * 100);
 
   async function copyText(value) {
     await navigator.clipboard.writeText(value || "");
@@ -273,110 +303,169 @@ function ProgressOverlay({
           </motion.div>
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wider text-sky-300">
-                  Provisioning
+                <p
+                  className={`text-[11px] font-bold uppercase tracking-[0.18em] ${
+                    isError ? "text-rose-300" : "text-sky-300"
+                  }`}
+                >
+                  {isError ? "Provisioning failed" : "Provisioning"}
                 </p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
-                  Building your portal
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                  {isError ? "Something went wrong" : "Building your portal"}
                 </h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  {isError
+                    ? "Your configuration is unchanged. Review the error below, then try again or go back to edit."
+                    : "This usually takes two to three minutes. Keep this tab open."}
+                </p>
               </div>
-              <div className="relative flex h-12 w-12 items-center justify-center">
-                <div className="absolute inset-0 animate-ping rounded-full bg-sky-400/20" />
-                <Loader2 className="relative h-6 w-6 animate-spin text-sky-400" />
+              {isError ? (
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/40">
+                  <AlertTriangle className="h-6 w-6" />
+                </span>
+              ) : (
+                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center">
+                  <div className="absolute inset-0 animate-ping rounded-full bg-sky-400/20" />
+                  <Loader2 className="relative h-6 w-6 animate-spin text-sky-400" />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+                <span>
+                  {doneCount} of {stepsState.length} steps complete
+                </span>
+                <span className={isError ? "text-rose-300" : "text-sky-300"}>
+                  {progressPercent}%
+                </span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                    isError
+                      ? "bg-rose-400"
+                      : "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                />
               </div>
             </div>
 
-            <div className="space-y-3">
-              {stepsState.map((item) => {
+            <ol className="rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2">
+              {stepsState.map((item, index) => {
                 const isRunning = item.status === "running";
                 const isDone = item.status === "done";
+                const isFailed = item.status === "error";
+                const isSkipped =
+                  isError && !isDone && !isFailed && failedIndex !== -1 && index > failedIndex;
+                const isLast = index === stepsState.length - 1;
                 return (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={item.step}
-                    className={`relative overflow-hidden flex items-center justify-between gap-3 rounded-xl border p-4 transition-all duration-500 ${
-                      isRunning
-                        ? "border-sky-500/50 bg-sky-500/10 shadow-[0_0_20px_rgba(56,189,248,0.15)] scale-[1.02]"
-                        : isDone
-                          ? "border-emerald-500/20 bg-emerald-500/5 opacity-70"
-                          : "border-white/5 bg-slate-900/50 opacity-50"
-                    }`}
-                  >
-                    {isRunning && (
-                      <motion.div
-                        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-sky-400/10 to-transparent"
-                        animate={{ translateX: ["-100%", "200%"] }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
+                  <li key={item.step} className="relative flex items-center gap-4 py-2.5">
+                    {!isLast && (
+                      <span
+                        aria-hidden="true"
+                        className={`absolute left-4 top-[2.4rem] h-[calc(100%-1.6rem)] w-px ${
+                          isDone ? "bg-emerald-500/40" : "bg-white/10"
+                        }`}
                       />
                     )}
-                    <div className="relative z-10 flex items-center gap-4">
-                      <div className="relative">
-                        {isRunning && (
-                          <div className="absolute -inset-1 animate-pulse rounded-full bg-sky-400/20 blur-sm" />
-                        )}
-                        <span
-                          className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-500 ${
-                            isRunning
-                              ? "bg-sky-500 text-white shadow-lg shadow-sky-500/40"
-                              : isDone
-                                ? "bg-emerald-500/20 text-emerald-400"
-                                : "bg-white/10 text-slate-500"
-                          }`}
-                        >
-                          {isDone ? (
-                            <Check className="h-4 w-4" />
-                          ) : isRunning ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <span className="text-xs font-medium">
-                              {item.step}
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                    <span className="relative shrink-0">
+                      {isRunning && (
+                        <span className="absolute -inset-1 animate-pulse rounded-full bg-sky-400/20 blur-sm" />
+                      )}
                       <span
-                        className={`text-sm font-semibold transition-colors duration-500 ${
+                        className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-500 ${
                           isRunning
-                            ? "text-sky-100"
+                            ? "bg-sky-500 text-white shadow-lg shadow-sky-500/40"
                             : isDone
-                              ? "text-emerald-100/70"
-                              : "text-slate-400"
+                              ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40"
+                              : isFailed
+                                ? "bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/50"
+                                : "bg-white/5 text-slate-500 ring-1 ring-white/10"
                         }`}
                       >
-                        {item.message || item.label}
+                        {isDone ? (
+                          <Check className="h-4 w-4" />
+                        ) : isRunning ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : isFailed ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          <span className="text-xs font-semibold">{item.step}</span>
+                        )}
                       </span>
-                    </div>
+                    </span>
                     <span
-                      className={`relative z-10 text-xs transition-colors duration-500 ${
+                      className={`min-w-0 flex-1 truncate text-sm font-medium transition-colors duration-500 ${
                         isRunning
-                          ? "text-sky-300 font-medium animate-pulse"
+                          ? "text-white"
                           : isDone
-                            ? "text-emerald-500/50"
-                            : "text-slate-500"
+                            ? "text-slate-300"
+                            : isFailed
+                              ? "text-rose-100"
+                              : "text-slate-500"
                       }`}
                     >
-                      {isDone ? "Done" : item.hint}
+                      {item.message || item.label}
                     </span>
-                  </motion.div>
+                    <span
+                      className={`shrink-0 text-xs transition-colors duration-500 ${
+                        isRunning
+                          ? "font-medium text-sky-300"
+                          : isDone
+                            ? "text-emerald-400/80"
+                            : isFailed
+                              ? "font-semibold text-rose-300"
+                              : "text-slate-600"
+                      }`}
+                    >
+                      {isDone
+                        ? "Done"
+                        : isFailed
+                          ? "Failed"
+                          : isSkipped
+                            ? "Skipped"
+                            : item.hint}
+                    </span>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
 
-            {error && (
+            {isError && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="rounded-lg border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-100"
+                role="alert"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-4"
               >
-                {error}
+                <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                  Error
+                </p>
+                <p className="mt-1 break-words text-sm text-rose-50">
+                  {error || "Could not generate portal."}
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={onDismiss}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/20 hover:bg-white/5"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to review
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 transition hover:bg-sky-400 active:scale-[0.98]"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Try again
+                  </button>
+                </div>
               </motion.div>
             )}
           </div>
@@ -401,7 +490,13 @@ export default function PortalWizard() {
   const [provisionResult, setProvisionResult] = useState(null);
 
   const activeStep = steps[stepIndex];
-  
+  const isLastStep = stepIndex === steps.length - 1;
+  const moduleCount = config.modules?.length || 0;
+  const fieldCount = (config.modules || []).reduce(
+    (total, module) => total + (module.fields?.length || 0),
+    0
+  );
+
   useEffect(() => {
     const color = config.themeColor || "#2563eb";
     const clean = color.replace("#", "");
@@ -415,23 +510,34 @@ export default function PortalWizard() {
     root.style.setProperty("--portal-accent", color);
     root.style.setProperty("--portal-accent-rgb", `${r} ${g} ${b}`);
   }, [config.themeColor]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [stepIndex]);
+
   const progress = useMemo(
     () => Math.round(((stepIndex + 1) / steps.length) * 100),
     [stepIndex]
   );
 
+  function goToStep(index) {
+    if (index > stepIndex) {
+      const nextErrors = validateStep(stepIndex, config);
+      setErrors(nextErrors);
+      if (Object.keys(nextErrors).length) return;
+    } else {
+      setErrors({});
+    }
+    setDirection(index > stepIndex ? 1 : -1);
+    setStepIndex(index);
+  }
+
   function goNext() {
-    const nextErrors = validateStep(stepIndex, config);
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
-    setDirection(1);
-    setStepIndex((value) => Math.min(value + 1, steps.length - 1));
+    goToStep(Math.min(stepIndex + 1, steps.length - 1));
   }
 
   function goBack() {
-    setErrors({});
-    setDirection(-1);
-    setStepIndex((value) => Math.max(value - 1, 0));
+    goToStep(Math.max(stepIndex - 1, 0));
   }
 
   async function handleGenerate() {
@@ -485,285 +591,372 @@ export default function PortalWizard() {
       setProvisionResult(result);
       setGenerateStatus("success");
     } catch (error) {
+      setProgressState((current) => {
+        const runningIndex = current.findIndex(
+          (item) => item.status === "running"
+        );
+        const failIndex =
+          runningIndex === -1
+            ? current.findIndex((item) => item.status !== "done")
+            : runningIndex;
+        return current.map((item, index) =>
+          index === failIndex ? { ...item, status: "error" } : item
+        );
+      });
       setGenerateError(error.message || "Could not generate portal.");
       setGenerateStatus("error");
       return;
     }
   }
 
-  return (
-    <main className="relative min-h-screen bg-slate-950 text-slate-100 antialiased overflow-x-hidden">
-      {/* Background Ambient glows */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />
-      <div className="pointer-events-none absolute -top-40 left-1/3 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-[rgba(var(--portal-accent-rgb),0.15)] blur-[150px]" />
+  const logoTile = config.logoUrl ? (
+    <img
+      src={config.logoUrl}
+      alt=""
+      className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/10"
+    />
+  ) : (
+    <div
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold tracking-wider text-white ring-1 ring-white/10"
+      style={{ backgroundColor: "var(--portal-accent)" }}
+    >
+      {(config.logoText || "AP").slice(0, 3)}
+    </div>
+  );
 
-      {/* Desktop Sidebar Layout */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-white/10 bg-slate-950 lg:flex lg:flex-col h-screen">
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="border-b border-white/10 p-5">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-white"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Gallery
-            </Link>
-            
-            <div className="mt-5 flex items-center gap-3">
-              {config.logoUrl ? (
-                <img
-                  src={config.logoUrl}
-                  alt=""
-                  className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/10"
-                />
-              ) : (
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-bold text-sm tracking-wider ring-1 ring-white/10"
-                  style={{ backgroundColor: "var(--portal-accent)" }}
-                >
-                  {config.logoText || "AP"}
-                </div>
-              )}
-              <div className="min-w-0">
-                <h1 className="truncate text-sm font-semibold text-white">
-                  {config.appName || "My Portal"}
-                </h1>
-                <p className="truncate text-[10px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Configuring...
-                </p>
-              </div>
+  return (
+    <main className="relative min-h-screen bg-slate-950 text-slate-100 antialiased">
+      {/* Background Ambient glows (clipped so they never cause horizontal scroll) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" />
+        <div className="absolute -top-48 left-1/2 h-[28rem] w-[44rem] -translate-x-1/2 rounded-full bg-[rgba(var(--portal-accent-rgb),0.13)] blur-[140px]" />
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-white/10 bg-slate-950 lg:flex">
+        <div className="border-b border-white/10 p-5">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Gallery
+          </Link>
+
+          <div className="mt-5 flex items-center gap-3">
+            {logoTile}
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-semibold text-white">
+                {config.appName || "My Portal"}
+              </h1>
+              <p className="truncate text-xs text-slate-500">
+                /{config.slug || "portal"}
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Navigation Steps */}
-          <nav className="flex-1 space-y-1.5 overflow-y-auto p-4">
+        {/* Step navigation */}
+        <nav aria-label="Wizard steps" className="flex-1 overflow-y-auto px-4 py-5">
+          <ol className="space-y-1">
             {steps.map((step, index) => {
               const isActive = index === stepIndex;
               const isDone = index < stepIndex;
-              const StepIcon = index === 0 ? Palette : index === 1 ? Database : Sparkles;
+              const isLast = index === steps.length - 1;
+              const StepIcon = step.icon;
 
               return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => {
-                    if (index > stepIndex) {
-                      const nextErrors = validateStep(stepIndex, config);
-                      setErrors(nextErrors);
-                      if (Object.keys(nextErrors).length) return;
-                    }
-                    setDirection(index > stepIndex ? 1 : -1);
-                    setStepIndex(index);
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3.5 text-left text-sm font-medium transition duration-200 ${
-                    isActive
-                      ? "border-[var(--portal-accent)]/30 bg-[rgba(var(--portal-accent-rgb),0.12)] text-white shadow-sm"
-                      : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className={`flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition duration-200 ${
-                      isDone
-                        ? "bg-emerald-500 text-white"
-                        : isActive
-                          ? "bg-[var(--portal-accent)] text-white shadow-lg shadow-[var(--portal-accent)]/30"
-                          : "bg-white/10 text-slate-300"
+                <li key={step.id} className="relative">
+                  {!isLast && (
+                    <span
+                      aria-hidden="true"
+                      className={`absolute left-[27px] top-[46px] -bottom-1 w-px ${
+                        isDone
+                          ? "bg-emerald-500/40"
+                          : "bg-white/10"
+                      }`}
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => goToStep(index)}
+                    aria-current={isActive ? "step" : undefined}
+                    className={`relative flex w-full cursor-pointer items-start gap-3 rounded-xl px-3 py-3 text-left transition duration-200 ${
+                      isActive
+                        ? "bg-white/[0.06] ring-1 ring-white/10"
+                        : "hover:bg-white/[0.04]"
                     }`}
                   >
-                    {isDone ? <Check className="h-3 w-3" /> : index + 1}
-                  </span>
-                  <span className="flex-1">{step.label}</span>
-                  <StepIcon className={`h-4 w-4 transition duration-200 ${isActive ? "text-[var(--portal-accent)]" : "text-slate-500"}`} />
-                </button>
+                    <span
+                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition duration-200 ${
+                        isDone
+                          ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+                          : isActive
+                            ? "text-white"
+                            : "bg-white/5 text-slate-400 ring-1 ring-white/10"
+                      }`}
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "var(--portal-accent)",
+                              boxShadow:
+                                "0 0 18px rgba(var(--portal-accent-rgb), 0.45)",
+                            }
+                          : undefined
+                      }
+                    >
+                      {isDone ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <StepIcon className="h-4 w-4" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Step {index + 1}
+                      </span>
+                      <span
+                        className={`block text-sm font-semibold ${
+                          isActive
+                            ? "text-white"
+                            : isDone
+                              ? "text-slate-200"
+                              : "text-slate-400"
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      {isActive && (
+                        <span className="mt-1 block text-xs leading-snug text-slate-400">
+                          {step.description}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
               );
             })}
-          </nav>
+          </ol>
+        </nav>
 
-          {/* Sidebar Footer */}
-          <div className="border-t border-white/10 p-4.5 space-y-4">
-            {/* Setup Completion */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px] font-medium text-slate-400">
-                <span>Setup Progress</span>
-                <span className="text-[var(--portal-accent)] font-bold">{progress}%</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-                <div
-                  className="h-full rounded-full bg-[var(--portal-accent)] shadow-[0_0_8px_var(--portal-accent)] transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+        {/* Sidebar Footer */}
+        <div className="space-y-4 border-t border-white/10 p-5">
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] font-medium text-slate-400">
+              <span>Setup progress</span>
+              <span className="font-bold text-[var(--portal-accent)]">{progress}%</span>
             </div>
-
-            {/* Builder Profile card */}
-            <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-              <div className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-slate-800 ring-1 ring-white/10">
-                <UserRound className="h-4 w-4 text-slate-300" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white">App Creator</p>
-                <p className="text-[10px] text-slate-400">Workspace Active</p>
-              </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
+              <div
+                className="h-full rounded-full bg-[var(--portal-accent)] shadow-[0_0_8px_var(--portal-accent)] transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
+
+          <dl className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg bg-white/5 px-2.5 py-2">
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">
+                Modules
+              </dt>
+              <dd className="mt-0.5 text-sm font-semibold text-white">
+                {moduleCount}
+              </dd>
+            </div>
+            <div className="rounded-lg bg-white/5 px-2.5 py-2">
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">
+                Fields
+              </dt>
+              <dd className="mt-0.5 text-sm font-semibold text-white">
+                {fieldCount}
+              </dd>
+            </div>
+            <div className="rounded-lg bg-white/5 px-2.5 py-2">
+              <dt className="text-[10px] uppercase tracking-wider text-slate-500">
+                Theme
+              </dt>
+              <dd className="mt-1 flex items-center gap-1.5">
+                <span
+                  className="h-3.5 w-3.5 rounded-full ring-1 ring-white/20"
+                  style={{ backgroundColor: "var(--portal-accent)" }}
+                />
+                <span className="truncate text-[11px] font-medium capitalize text-slate-300">
+                  {config.themePreset || "custom"}
+                </span>
+              </dd>
+            </div>
+          </dl>
         </div>
       </aside>
 
       {/* Main Panel Content (Shifted on Desktop) */}
-      <div className="lg:pl-72 min-h-screen flex flex-col pb-24 lg:pb-0">
+      <div className="flex min-h-screen flex-col pb-24 lg:pb-0 lg:pl-72">
         {/* Mobile Sticky Top Header */}
         <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl lg:hidden">
           <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6">
-            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition">
+            <Link to="/" className="flex items-center gap-2 text-slate-400 transition hover:text-white">
               <ArrowLeft className="h-4 w-4" />
               <span className="text-xs font-semibold">Gallery</span>
             </Link>
-            <span className="text-sm font-bold text-white truncate max-w-[150px]">
+            <span className="max-w-[160px] truncate text-sm font-bold text-white">
               {config.appName}
             </span>
+            <span className="text-xs font-semibold text-slate-400">
+              {stepIndex + 1}/{steps.length}
+            </span>
+          </div>
+          <div className="h-0.5 w-full bg-white/5">
             <div
-              className="h-6 w-6 rounded-full"
-              style={{ backgroundColor: "var(--portal-accent)" }}
+              className="h-full bg-[var(--portal-accent)] transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
             />
           </div>
         </header>
 
         {/* Wizard Main Pane */}
-        <main className="flex-1 px-4 py-8 sm:px-8 lg:px-10 max-w-7xl w-full mx-auto flex flex-col justify-between">
-          <div className="space-y-6">
-            {/* Header / Subtitle */}
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end border-b border-white/5 pb-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-[var(--portal-accent)] animate-pulse" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--portal-accent)]">
-                    Phase 1: Portal Configurator
-                  </p>
-                </div>
-                <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                  {activeStep.label}
-                </h2>
-                <p className="mt-1 text-sm text-slate-400 max-w-2xl">
-                  Configure visual branding, modules metadata, data schema, and generate a live portal database.
-                </p>
-              </div>
-              
-              {/* Progress Display on Mobile/Tablet */}
-              <div className="min-w-[180px] rounded-xl border border-white/10 bg-white/[0.02] p-3 lg:hidden">
-                <div className="mb-1.5 flex justify-between text-[11px] font-semibold text-slate-400">
-                  <span>Progress</span>
-                  <span className="text-[var(--portal-accent)]">{progress}%</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-[var(--portal-accent)] shadow-[0_0_8px_var(--portal-accent)] transition-all duration-500 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-8 lg:px-10 lg:py-10">
+          {/* Step header */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--portal-accent)]">
+                Step {stepIndex + 1} of {steps.length}
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                {activeStep.label}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                {activeStep.description}
+              </p>
             </div>
 
-            {/* Render step card content */}
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/30 shadow-2xl ring-1 ring-white/5 backdrop-blur-sm p-4 sm:p-6.5">
-              <AnimatePresence custom={direction} mode="wait">
-                <motion.div
-                  key={activeStep.id}
-                  custom={direction}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.28, ease: "easeOut" }}
-                >
-                  <StepContent
-                    stepIndex={stepIndex}
-                    config={config}
-                    setConfig={setConfig}
-                    errors={errors}
-                    reviewProps={{
-                      onConfigReplace: (nextConfig) =>
-                        setConfig(normalizeModuleIds(nextConfig)),
-                      onGenerate: handleGenerate,
-                      generateStatus,
-                      generateError,
-                    }}
-                  />
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            <ol className="flex items-center gap-1.5 lg:hidden" aria-hidden="true">
+              {steps.map((step, index) => (
+                <li
+                  key={step.id}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === stepIndex
+                      ? "w-8 bg-[var(--portal-accent)]"
+                      : index < stepIndex
+                        ? "w-4 bg-emerald-500/70"
+                        : "w-4 bg-white/10"
+                  }`}
+                />
+              ))}
+            </ol>
           </div>
 
-          {/* Bottom Footer Actions */}
-          <footer className="mt-8 flex justify-between items-center border-t border-white/5 pt-6">
-            <button
-              type="button"
-              onClick={goBack}
-              disabled={stepIndex === 0}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:border-[var(--portal-accent)]/30 hover:bg-white/10 transition disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
+          {/* Step content */}
+          <div className="mt-8 flex-1">
+            <AnimatePresence custom={direction} mode="wait" initial={false}>
+              <motion.div
+                key={activeStep.id}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.24, ease: "easeOut" }}
+              >
+                <StepContent
+                  stepIndex={stepIndex}
+                  config={config}
+                  setConfig={setConfig}
+                  errors={errors}
+                  reviewProps={{
+                    onConfigReplace: (nextConfig) =>
+                      setConfig(normalizeModuleIds(nextConfig)),
+                    onGenerate: handleGenerate,
+                    generateStatus,
+                    generateError,
+                  }}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-            {stepIndex < steps.length - 1 ? (
+          {/* Action bar */}
+          <footer className="mt-10 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 shadow-2xl shadow-black/40 ring-1 ring-white/5 backdrop-blur-xl lg:sticky lg:bottom-4 lg:z-10">
+            <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={goNext}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-5.5 py-2.5 text-sm font-semibold text-white shadow-lg active:scale-[0.98] transition cursor-pointer"
-                style={{
-                  background: "linear-gradient(135deg, var(--portal-accent), #4f46e5)",
-                  boxShadow: "0 4px 14px rgba(79, 70, 229, 0.2)"
-                }}
+                onClick={goBack}
+                disabled={stepIndex === 0}
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
               >
-                Next
-                <ArrowRight className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" />
+                Back
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={generateStatus === "running"}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5.5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-              >
-                {generateStatus === "running" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                Generate Portal
-              </button>
-            )}
+
+              <p className="hidden text-xs text-slate-500 sm:block">
+                {isLastStep
+                  ? "Everything looks good? Generate the portal."
+                  : `Next: ${steps[stepIndex + 1].label}`}
+              </p>
+
+              {!isLastStep ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+                  style={{
+                    backgroundColor: "var(--portal-accent)",
+                    boxShadow:
+                      "0 8px 24px -8px rgba(var(--portal-accent-rgb), 0.7)",
+                  }}
+                >
+                  Continue
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={generateStatus === "running"}
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {generateStatus === "running" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Rocket className="h-4 w-4" />
+                  )}
+                  Generate Portal
+                </button>
+              )}
+            </div>
           </footer>
-        </main>
+        </div>
       </div>
 
       {/* Mobile Sticky Bottom Tab Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-slate-950/90 backdrop-blur-lg lg:hidden py-1">
+      <nav
+        aria-label="Wizard steps"
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-white/10 bg-slate-950/90 py-1 backdrop-blur-lg lg:hidden"
+      >
         {steps.map((step, index) => {
           const isActive = index === stepIndex;
-          const StepIcon = index === 0 ? Palette : index === 1 ? Database : Sparkles;
+          const isDone = index < stepIndex;
+          const StepIcon = step.icon;
           return (
             <button
               key={step.id}
               type="button"
-              onClick={() => {
-                if (index > stepIndex) {
-                  const nextErrors = validateStep(stepIndex, config);
-                  setErrors(nextErrors);
-                  if (Object.keys(nextErrors).length) return;
-                }
-                setDirection(index > stepIndex ? 1 : -1);
-                setStepIndex(index);
-              }}
-              className={`flex flex-1 flex-col items-center gap-1.5 py-2 text-[10px] font-medium transition ${
-                isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+              onClick={() => goToStep(index)}
+              aria-current={isActive ? "step" : undefined}
+              className={`flex flex-1 cursor-pointer flex-col items-center gap-1 py-2 text-[10px] font-semibold transition ${
+                isActive
+                  ? "text-white"
+                  : isDone
+                    ? "text-emerald-300"
+                    : "text-slate-500 hover:text-slate-300"
               }`}
               style={isActive ? { color: "var(--portal-accent)" } : undefined}
             >
-              <StepIcon className="h-5 w-5" />
-              <span>{step.label.split(" ")[0]}</span>
+              {isDone ? (
+                <Check className="h-5 w-5" />
+              ) : (
+                <StepIcon className="h-5 w-5" />
+              )}
+              <span>{step.short}</span>
             </button>
           );
         })}
@@ -779,6 +972,11 @@ export default function PortalWizard() {
           error={generateError}
           result={provisionResult}
           onClose={() => navigate("/")}
+          onRetry={handleGenerate}
+          onDismiss={() => {
+            setGenerateStatus("idle");
+            setGenerateError("");
+          }}
         />
       )}
     </main>
